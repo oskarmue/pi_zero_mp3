@@ -36,7 +36,7 @@ from kivy.core.image import Image as CoreImage
 
 from kivy.core.image import Image
 
-
+from kivy.clock import Clock
 
 import psutil
 import time
@@ -69,7 +69,6 @@ class AccuratePerspective(Widget):
         with self.canvas:
             PushMatrix()  # Aktuellen Zustand speichern
 
-            # HIER wird die Position festgelegt: (x, y)
             self.pos_transformation = Translate(750, 750)
 
             # Start-Koordinaten (Trapez 1)
@@ -149,7 +148,7 @@ class MyApp(App):
         #Parameters & fixed Variables
         self.distance_background    = 120
         self.distance_foregorund    = 100
-        self.angle_background       = 20
+        self.angle_background       = 40
         self.angle_foreground       = 0
         self.positionen_in_reihenfolge    = [
                                         [100, 950, self.angle_background, self.distance_background], [100, 800, self.angle_background, self.distance_background], [100, 650, self.angle_background, self.distance_background], [100, 500, self.angle_background, self.distance_background],
@@ -167,9 +166,9 @@ class MyApp(App):
 
 
 
-        dauer_animation_in_sec  = 1
-        frames_per_sec          = 30
-        self.frames_per_animation    = round(frames_per_sec * dauer_animation_in_sec)
+        self.dauer_animation_in_sec  = 1
+        self.frames_per_sec          = 30
+        self.frames_per_animation    = round(self.frames_per_sec * self.dauer_animation_in_sec)
         self.Zwischenpositionen      = [] #für jedes frame ein unterarray - das kann auch einma am Anfang des Programms berechnet werden -> bleibt dann gleich
         for i in range(len(self.positionen_in_reihenfolge)-1):
             #derzeitige position    = self.positionen_in_reihenfolge[i+1]
@@ -274,8 +273,55 @@ class MyApp(App):
             self.layout.add_widget(self.widgets[6], index=0)
             self.layout.add_widget(self.widgets[5], index=0)
             self.layout.add_widget(self.widgets[4], index=0)
+
+    def cover_flow_down(self):
+        #1. wenn das unterste Bild angezeigt wird, kann dieser button nicht ausgeführt werden - sonst einem widget ein neues Bild zuordnen
+        if self.index_of_upper_cover+self.num_widgets == self.num_covers:
+            #die letzten zwei "buffer coveers" müssen noch hoch geholt werden
+            return
+        
+        #2. dem widget welches an das andere ende gestellt wird eine neue textur geben
+        self.widgets[0].change_texture(self.image_paths[self.index_of_upper_cover+self.num_widgets])
+
+        #3. das oberste cover ist nun nicht mehr das 0. aus der liste
+        self.index_of_upper_cover += 1
+
+        #4. die widgets bewegen sich eins nach unten -> und verändern ggf. Ihre perspektive
+        self.widgets.append(self.widgets[0])
+
+        #5. dem widget welches über den gesamten screen muss um ans andere ende zu kommen ohne amiation position ändern
+        self.widgets[-1].change_position(
+            new_x=self.positionen_in_reihenfolge[-1][0], 
+            new_y=self.positionen_in_reihenfolge[-1][1])
+        
+        #6. animation beginnen
+        self.current_frame = 0
+        
+        # Clock startet: Ruft '_animate_step' ca. 30-60 mal pro Sekunde auf
+        # Wir speichern das Event in 'self.anim_event', um es später stoppen zu können
+        self.animation_event = Clock.schedule_interval(self.animate_step, self.dauer_animation_in_sec/self.frames_per_animation)
+
+    def animate_step(self, dt):
+        # Prüfen, ob Animation zu Ende ist
+        if self.current_frame >= self.frames_per_animation:
+            Clock.unschedule(self.animation_event)
+            return False #dann hört die Clock auf
+        
+        # 4. Die eigentliche Bewegung
+        for i in range(len(self.positionen_in_reihenfolge) - 1):
+            pos__persp_data = self.Zwischenpositionen[i][self.current_frame]
+            # [x, y, angle, distance]
+            self.widgets[i].change_position(new_x=pos__persp_data[0], new_y=pos__persp_data[1])
+            self.widgets[i].change_perspective(new_angle_deg=pos__persp_data[2], new_distance=pos__persp_data[3])
+
+        # 5. Z-Index / Sortierung korrigieren
+        # (Das muss in jedem Frame passieren, damit die Überlappung stimmt)
+        self.reorder_certain_widgets()
+
+        # Frame-Zähler erhöhen
+        self.current_frame += 1
     
-    def cover_flow_down(self): #-> die widgets bewegen sich hoch
+    def cover_flow_down_(self): #-> die widgets bewegen sich hoch
 
         '''
         um das animiert zu bekommen
