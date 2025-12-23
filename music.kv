@@ -1,0 +1,26 @@
+<AlbumCoverWidget@BoxLayout>:
+    # Diese Eigenschaften werden automatisch aus dem 'data'-Dictionary befüllt
+    image_source: ''
+    album_title: ''
+    
+    orientation: 'vertical'
+    padding: dp(10)
+    spacing: dp(5)
+
+    AsyncImage:
+        source: root.image_source
+        # Erlaubt dem Pi, das Bild im Hintergrund zu laden, ohne zu ruckeln
+        allow_stretch: True
+        keep_ratio: True
+
+<AlbumView>:
+    viewclass: 'AccuratePerspective'  # Der Bauplan für die recycelten Widgets
+    
+    RecycleBoxLayout:
+        # Hier definierst du das Layout-Verhalten
+        default_size: None, dp(200)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: 'vertical'
+        spacing: dp(20)
