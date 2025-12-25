@@ -1,10 +1,7 @@
 import math
 import matplotlib.pyplot as plt
 
-
-
-
-def vorward_punkte_berechnen(resolution, widgetbreite, db_halbe, dh):
+def backward_punkte_berechnen(resolution, widgetbreite, db_halbe, dh):
     #resolution = 16
     step_in_percent = 1/resolution
     step_in_pixel = 1/resolution * widgetbreite #bildbreite = 200
@@ -56,7 +53,6 @@ def vorward_punkte_berechnen(resolution, widgetbreite, db_halbe, dh):
 
     obere_punkte = nur_x_y_vor[-1*(resolution+1)*2:]
     untere_punkte = nur_x_y_vor[:(resolution+1)*2]
-
 
 
     #1. verschiebung der Punkte in der obersten Reihe berechnen
@@ -115,6 +111,95 @@ def vorward_punkte_berechnen(resolution, widgetbreite, db_halbe, dh):
 
     return indices, vertices, vertices_nach_wechsel
 
+def forward_punkte_berechnen(resolution, widgetbreite, db_halbe, dh):
+
+    step_in_percent = 1 / resolution
+    step_in_pixel = widgetbreite / resolution
+    widgetbreite_halbiert = widgetbreite / 2
+
+    # --- Ursprüngliche Vertices ---
+    vertices = []
+    for i in range(resolution + 1):
+        for j in range(resolution + 1):
+            vertices += [
+                round(j * step_in_pixel),
+                round(i * step_in_pixel),
+                round(j * step_in_percent, 2),
+                round(i * step_in_percent, 2)
+            ]
+
+    # --- Indices ---
+    indices = []
+    for i in range(resolution):
+        for j in range(resolution):
+            bl = i * (resolution + 1) + j
+            br = bl + 1
+            tl = bl + (resolution + 1)
+            tr = tl + 1
+            indices += [bl, br, tr, bl, tr, tl]
+
+    # --- obere & untere Punkte extrahieren ---
+    nur_x_y = []
+    for i in range(0, len(vertices), 4):
+        nur_x_y.append(vertices[i])
+        nur_x_y.append(vertices[i + 1])
+
+    obere_punkte = nur_x_y[-(resolution + 1) * 2:]     # bleiben gleich
+    untere_punkte = nur_x_y[:(resolution + 1) * 2]     # werden verändert
+
+    # --- 1. Untere Punkte vertikal nach oben ziehen ---
+    untere_punkte[1::2] = [y + dh for y in untere_punkte[1::2]]
+
+    # --- 2. Horizontale Stauchung der unteren Punkte ---
+    stauchungsfaktor = db_halbe / widgetbreite_halbiert
+
+    for i in range(0, len(untere_punkte), 2):
+        x = untere_punkte[i]
+        if x < widgetbreite_halbiert:
+            verschiebung = stauchungsfaktor * (widgetbreite_halbiert - x)
+            untere_punkte[i] = x - verschiebung
+        else:
+            verschiebung = stauchungsfaktor * (x - widgetbreite_halbiert)
+            untere_punkte[i] = x - verschiebung
+
+    # --- 3. Winkel von oben nach unten ---
+    winkel = []
+    for i in range(0, (resolution + 1) * 2, 2):
+        dx = untere_punkte[i] - obere_punkte[i]
+        dy = untere_punkte[i + 1] - obere_punkte[i + 1]
+        winkel.append(math.atan(dx / dy))
+
+    # --- 4. Neue Vertices berechnen ---
+    vertices_nach_wechsel = []
+
+    for i in range(resolution + 1):
+        y_verh = i * step_in_percent
+        y_koor = i * step_in_pixel
+
+        # vertikale Bewegung nimmt nach unten zu
+        y_koor += dh * (1 - y_verh)
+
+        for j in range(resolution + 1):
+            x_koor = j * step_in_pixel
+            x_verh = j * step_in_percent
+
+            # horizontale Stauchung nimmt nach unten zu
+            verschiebung = math.tan(winkel[j]) * (1 - y_verh) * step_in_pixel * resolution
+
+            if x_koor < widgetbreite_halbiert:
+                x_koor += verschiebung
+            else:
+                x_koor -= verschiebung
+
+            vertices_nach_wechsel += [
+                round(x_koor, 2),
+                round(y_koor, 2),
+                round(x_verh, 2),
+                round(y_verh, 2)
+            ]
+
+    return indices, vertices, vertices_nach_wechsel
+
 def plot_vertices(vertice_1, vertice_2):
     # x/y aus vertice_1 extrahieren
     x1 = vertice_1[0::4]
@@ -136,6 +221,7 @@ def plot_vertices(vertice_1, vertice_2):
 
     plt.show()
 
-indices, vertices, vertices_nach_wechsel = vorward_punkte_berechnen(16, 200, 20, 20)
+indices_b, vertices_b, vertices_nach_wechsel_b = backward_punkte_berechnen(1, 200, 20, 20)
+indices_f, vertices_f, vertices_nach_wechsel_f = forward_punkte_berechnen(4, 200, 20, 20)
 
-plot_vertices(vertices ,vertices_nach_wechsel)
+plot_vertices(vertices_f, vertices_nach_wechsel_f)
