@@ -10,8 +10,8 @@ from collections import deque
 from kivy.config import Config
 
 #Settings - config muss zuerst gesetzt werden
-Config.set('graphics', 'width', '400')
-Config.set('graphics', 'height', '900')
+Config.set('graphics', 'width', '240')
+Config.set('graphics', 'height', '320')
 Config.set('graphics', 'resizable', False) # Optional: Verhindert das Skalieren
 
 #restlichen Kivy importe
@@ -413,6 +413,8 @@ class MyApp(App):
         #Haupt-Layout erstellen
         self.layout = FloatLayout()
 
+        Window.bind(on_key_down=self.on_key_down)
+
         #Die start widgets an den positionen erstellen und erste Bilder zuordnen - die positionen müssen in der reihenfolge liegen, wie die widgets sich überlappen sollen
         for i in range(self.index_of_upper_cover, len(self.positionen_in_reihenfolge)):
             #widget erstellen und der liste anhängen
@@ -425,6 +427,7 @@ class MyApp(App):
         
 
         #Button zum testen hinzufügen
+        '''
         button_layout = BoxLayout(orientation='horizontal', size_hint_y=0.1)
 
         btn_1 = Button(text="vor")
@@ -436,13 +439,13 @@ class MyApp(App):
         button_layout.add_widget(btn_1)
         button_layout.add_widget(btn_2)
         self.layout.add_widget(button_layout)
-
+        '''
         self.perspectiven = []
         self.perspectiven_vor = []
 
 
-        x_1, y_1, angle_1, distance_1 = 100, 350, 0, 100
-        x_2, y_2, angle_2, distance_2 = 100, 350, 30, 100
+        x_1, y_1, angle_1, distance_1 = 20, 60, 0, 100
+        x_2, y_2, angle_2, distance_2 = 20, 60, 30, 100
         d_x_per_frame           = (x_2 - x_1)/self.frames_per_animation
         d_y_per_frame           = (y_2 - y_1)/self.frames_per_animation
         d_distance_per_frame    = (distance_2 - distance_1)/self.frames_per_animation
@@ -453,8 +456,8 @@ class MyApp(App):
             angle_s = angle_1 + s*d_angle_per_frame
             idices, vertices_1, vertices_2, vertices_3 = self.widgets[0].foward_lean(100, 100, angle_s, 200, self.resolution_)
             self.perspectiven.append([
-                                100, 
-                                400, 
+                                20, 
+                                60, 
                                 vertices_3
                                 ])
 
@@ -462,12 +465,18 @@ class MyApp(App):
             angle_s = angle_2 - s*d_angle_per_frame
             idices, vertices_1, vertices_2, vertices_3 = self.widgets[0].foward_lean(100, 100, angle_s, 200, self.resolution_)
             self.perspectiven_vor.append([
-                                100, 
-                                400, 
+                                20, 
+                                60, 
                                 vertices_3
                                 ])
 
         return self.layout
+    
+    def on_key_down(self, window, key, scancode, codepoint, modifiers):
+        if key == 273:  # Pfeil nach oben
+            self.cover_flow_up()
+        elif key == 274:  # Pfeil nach unten
+            self.cover_flow_down()
     
     def find_image_files_multiple_globs(self, directory):
         # Definieren Sie die Muster für jede Endung
