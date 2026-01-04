@@ -11,7 +11,13 @@ from kivy.uix.label import Label
 from kivy.uix.image import Image # Neu: Das Image-Widget
 from kivy.uix.floatlayout import FloatLayout # Neu: FloatLayout
 
-image_path = '/home/pi/Cover_Flow_test/Music_Library/Eminem/Encore/ab67616d000082c1dfd0ebe9b4b99f621f376453_passend.jpeg'
+from kivy.config import Config
+Config.set('graphics', 'width', '240')
+Config.set('graphics', 'height', '320')
+Config.set('graphics', 'fullscreen', '1')
+Config.set('graphics', 'show_cursor', '0')
+#Config.set('graphics', 'multisamples', '0') # Wichtig für Performance auf SPI
+
 
 class SimpleApp(App):
     def build(self):

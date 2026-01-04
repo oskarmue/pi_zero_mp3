@@ -151,10 +151,7 @@ class MyApp(App):
         self.angle_background       = 40
         self.angle_foreground       = 0
         self.positionen_in_reihenfolge    = [
-                                        [100, 950, self.angle_background, self.distance_background], [100, 800, self.angle_background, self.distance_background], [100, 650, self.angle_background, self.distance_background], [100, 500, self.angle_background, self.distance_background],
-                                        [100, 350, self.angle_foreground, self.distance_foregorund], 
-                                        [100, 200, -1*self.angle_background, self.distance_background], [100, 50, -1*self.angle_background, self.distance_background], [100, -100, -1*self.angle_background, self.distance_background], [100, -250, -1*self.angle_background, self.distance_background],
-                                        
+                                       [100, 350, -30, self.distance_foregorund]
                                     ] #[pos_x, pos_y, angle, distance] - sonderfälle bei den enden, da zweimal das gleiche, da einer daobn nicht benötigt wird
 
 
@@ -166,47 +163,29 @@ class MyApp(App):
 
 
 
-        self.dauer_animation_in_sec  = 1
-        self.frames_per_sec          = 30
+        self.dauer_animation_in_sec  = 2
+        self.frames_per_sec          = 60
         self.frames_per_animation    = round(self.frames_per_sec * self.dauer_animation_in_sec)
         self.Zwischenpositionen      = [] #für jedes frame ein unterarray - das kann auch einma am Anfang des Programms berechnet werden -> bleibt dann gleich
-        for i in range(len(self.positionen_in_reihenfolge)-1):
-            #derzeitige position    = self.positionen_in_reihenfolge[i+1]
-            #angestrebte position   = self.positionen_in_reihenfolge[i]
-            x_1, y_1, angle_1, distance_1 = self.positionen_in_reihenfolge[i+1]
-            x_2, y_2, angle_2, distance_2 = self.positionen_in_reihenfolge[i]
-            d_x_per_frame           = (x_2 - x_1)/self.frames_per_animation
-            d_y_per_frame           = (y_2 - y_1)/self.frames_per_animation
-            d_distance_per_frame    = (distance_2 - distance_1)/self.frames_per_animation
-            d_angle_per_frame       = (angle_2 - angle_1)/self.frames_per_animation
-
-            positionen_i = []
-
-            for s in range(self.frames_per_animation):
-                positionen_i.append([
-                                    x_1 + s*d_x_per_frame, 
-                                    y_1 + s*d_y_per_frame, 
-                                    angle_1 + s*d_angle_per_frame, 
-                                    distance_1 + s*d_distance_per_frame
-                                    ])
-                
-            self.Zwischenpositionen.append(positionen_i)
 
 
+        x_1, y_1, angle_1, distance_1 = 100, 350, -30, 100
+        x_2, y_2, angle_2, distance_2 = 100, 350, 0, 100
+        d_x_per_frame           = (x_2 - x_1)/self.frames_per_animation
+        d_y_per_frame           = (y_2 - y_1)/self.frames_per_animation
+        d_distance_per_frame    = (distance_2 - distance_1)/self.frames_per_animation
+        d_angle_per_frame       = (angle_2 - angle_1)/self.frames_per_animation
 
+        self.positionen = []
 
-
-
-
-
-
-
-
-
-
-
-
-
+        for s in range(self.frames_per_animation):
+            self.positionen.append([
+                                x_1 + s*d_x_per_frame, 
+                                y_1 + s*d_y_per_frame, 
+                                angle_1 + s*d_angle_per_frame, 
+                                distance_1 + s*d_distance_per_frame
+                                ])
+            
 
         #Haupt-Layout erstellen
         self.layout = FloatLayout()
@@ -221,25 +200,15 @@ class MyApp(App):
 
             self.layout.add_widget(self.widgets[i])
         
-        #Die lösung gefällt mir noch nicht gut, würde lieber direkt in der richtigen reihenfolge die wigets hinzufügen/ organisieren
-        self.layout.remove_widget(self.widgets[4])
-        self.layout.remove_widget(self.widgets[5])
-        self.layout.remove_widget(self.widgets[6])
-
-        self.layout.add_widget(self.widgets[6], index=0)
-        self.layout.add_widget(self.widgets[5], index=0)
-        self.layout.add_widget(self.widgets[4], index=0)
-
 
         #Button zum testen hinzufügen
         button_layout = BoxLayout(orientation='horizontal', size_hint_y=0.1)
-        btn_1 = Button(text="up")
-        btn_1.bind(on_press=lambda x: self.cover_flow_up())
+
 
         btn_2 = Button(text="down")
         btn_2.bind(on_press=lambda x: self.cover_flow_down())
 
-        button_layout.add_widget(btn_1)
+
         button_layout.add_widget(btn_2)
         self.layout.add_widget(button_layout)
 
@@ -264,41 +233,11 @@ class MyApp(App):
         
         return filtered_files
 
-    def reorder_certain_widgets(self):
-            #Die lösung gefällt mir noch nicht gut, würde lieber direkt in der richtigen reihenfolge die wigets hinzufügen/ organisieren
-            self.layout.remove_widget(self.widgets[4])
-            self.layout.remove_widget(self.widgets[5])
-            self.layout.remove_widget(self.widgets[6])
-
-            self.layout.add_widget(self.widgets[6], index=0)
-            self.layout.add_widget(self.widgets[5], index=0)
-            self.layout.add_widget(self.widgets[4], index=0)
-
     def cover_flow_down(self):
-        #1. wenn das unterste Bild angezeigt wird, kann dieser button nicht ausgeführt werden - sonst einem widget ein neues Bild zuordnen
-        if self.index_of_upper_cover+self.num_widgets == self.num_covers:
-            #die letzten zwei "buffer coveers" müssen noch hoch geholt werden
-            return
-        
-        #2. dem widget welches an das andere ende gestellt wird eine neue textur geben
-        self.widgets[0].change_texture(self.image_paths[self.index_of_upper_cover+self.num_widgets])
 
-        #3. das oberste cover ist nun nicht mehr das 0. aus der liste
-        self.index_of_upper_cover += 1
-
-        #4. die widgets bewegen sich eins nach unten -> und verändern ggf. Ihre perspektive
-        self.widgets.append(self.widgets[0])
-
-        #5. dem widget welches über den gesamten screen muss um ans andere ende zu kommen ohne amiation position ändern
-        self.widgets[-1].change_position(
-            new_x=self.positionen_in_reihenfolge[-1][0], 
-            new_y=self.positionen_in_reihenfolge[-1][1])
-        
         #6. animation beginnen
         self.current_frame = 0
         
-        # Clock startet: Ruft '_animate_step' ca. 30-60 mal pro Sekunde auf
-        # Wir speichern das Event in 'self.anim_event', um es später stoppen zu können
         self.animation_event = Clock.schedule_interval(self.animate_step, self.dauer_animation_in_sec/self.frames_per_animation)
 
     def animate_step(self, dt):
@@ -306,121 +245,17 @@ class MyApp(App):
         if self.current_frame >= self.frames_per_animation:
             Clock.unschedule(self.animation_event)
             return False #dann hört die Clock auf
-        
-        # 4. Die eigentliche Bewegung
-        for i in range(len(self.positionen_in_reihenfolge) - 1):
-            pos__persp_data = self.Zwischenpositionen[i][self.current_frame]
-            # [x, y, angle, distance]
-            self.widgets[i].change_position(new_x=pos__persp_data[0], new_y=pos__persp_data[1])
-            self.widgets[i].change_perspective(new_angle_deg=pos__persp_data[2], new_distance=pos__persp_data[3])
 
-        # 5. Z-Index / Sortierung korrigieren
-        # (Das muss in jedem Frame passieren, damit die Überlappung stimmt)
-        self.reorder_certain_widgets()
+        pos__persp_data = self.positionen[self.current_frame]
+        # [x, y, angle, distance]
+        self.widgets[0].change_position(new_x=pos__persp_data[0], new_y=pos__persp_data[1])
+        self.widgets[0].change_perspective(new_angle_deg=pos__persp_data[2], new_distance=pos__persp_data[3])
 
-        # Frame-Zähler erhöhen
+
         self.current_frame += 1
     
-    def cover_flow_down_(self): #-> die widgets bewegen sich hoch
-
-        '''
-        um das animiert zu bekommen
-        1. nur die animieren, die zu sehen sind -> den rest "einfach" mit einem mal umsetzen
-        2. Ziel Koordinaten für jedes widget ermitteln
-        3. zwischenschritte der widgets in einer liste speichern
-        4. durch Liste durchgehen und in jedem schritt jedes widget um einen Schritt weiter bewegen
-        5. und dann in jedem schritt auch jedes widget wieder neu sortieren (die drei removen und hinzufügen)
-        '''
-
-        #1. wenn das unterste Bild angezeigt wird, kann dieser button nicht ausgeführt werden - sonst einem widget ein neues Bild zuordnen
-        if self.index_of_upper_cover+self.num_widgets == self.num_covers:
-            #die letzten zwei "buffer coveers" müssen noch hoch geholt werden
-            return
-        
-        #2. dem widget welches an das andere ende gestellt wird eine neue textur geben
-        self.widgets[0].change_texture(self.image_paths[self.index_of_upper_cover+self.num_widgets])
-
-        #3. das oberste cover ist nun nicht mehr das 0. aus der liste
-        self.index_of_upper_cover += 1
-
-        #4. die widgets bewegen sich eins nach unten -> und verändern ggf. Ihre perspektive
-        self.widgets.append(self.widgets[0])
-
-        #5. dem widget welches über den gesamten screen muss um ans andere ende zu kommen ohne amiation position ändern
-        self.widgets[-1].change_position(
-            new_x=self.positionen_in_reihenfolge[-1][0], 
-            new_y=self.positionen_in_reihenfolge[-1][1])
-
-        #6. restlichen Widgets in einer Animation updaten
-        for s in range(self.frames_per_animation):
-            for i in range(len(self.positionen_in_reihenfolge)-1):
-                self.widgets[i].change_position(
-                    new_x=self.Zwischenpositionen[i][s][0], 
-                    new_y=self.Zwischenpositionen[i][s][1])
-                self.widgets[i].change_perspective(
-                    new_angle_deg=self.Zwischenpositionen[i][s][2] , 
-                    new_distance=self.Zwischenpositionen[i][s][3])
-
-            self.reorder_certain_widgets()
-
-                    
-
-        '''
-        for i in range(len(self.positionen_in_reihenfolge)-1):
-            self.widgets[i].change_position(new_x=self.positionen_in_reihenfolge[i][0], new_y=self.positionen_in_reihenfolge[i][1])
-            self.widgets[i].change_perspective(new_angle_deg=self.positionen_in_reihenfolge[i][2] , new_distance=self.positionen_in_reihenfolge[i][3])
 
 
-
-    #Die lösung gefällt mir noch nicht gut, würde lieber direkt in der richtigen reihenfolge die wigets hinzufügen/ organisieren
-        self.layout.remove_widget(self.widgets[4])
-        self.layout.remove_widget(self.widgets[5])
-        self.layout.remove_widget(self.widgets[6])
-
-        self.layout.add_widget(self.widgets[6], index=0)
-        self.layout.add_widget(self.widgets[5], index=0)
-        self.layout.add_widget(self.widgets[4], index=0)
-        '''
-
-    def cover_flow_up(self):
-        self.proc.cpu_percent(interval=None)
-        start_cpu = time.process_time()
-        start_real = time.perf_counter()
-        #1. wenn das unterste Bild angezeigt wird, kann dieser button nicht ausgeführt werden
-        if self.index_of_upper_cover == 0:
-            #die letzten zwei "buffer cove" müssen noch hoch geholt werden
-            return
-
-        self.widgets[-1].change_texture(self.image_paths[self.index_of_upper_cover - 1])
-        self.index_of_upper_cover -= 1
-
-        #2. die widgets bewegen sich eins nach unten -> und verändern ggf. Ihre perspektive
-        self.widgets.appendleft(self.widgets[-1])
-            
-        #self.widgets[i].change_perspective 
-        for i in range(len(self.positionen_in_reihenfolge)):
-            self.widgets[i].change_position(new_x=self.positionen_in_reihenfolge[i][0], new_y=self.positionen_in_reihenfolge[i][1])
-
-            self.widgets[i].change_perspective(new_angle_deg=self.positionen_in_reihenfolge[i][2] , new_distance=self.positionen_in_reihenfolge[i][3])
-
-        auslastung = self.proc.cpu_percent(interval=None)
-        ende_cpu = time.process_time()
-        ende_real = time.perf_counter()
-
-        cpu_zeit = ende_cpu - start_cpu
-        echt_zeit = ende_real - start_real
-        print(f"CPU-Auslastung während der Funktion: {auslastung}%")
-        auslastung_anteil = (cpu_zeit / echt_zeit) * 100
-        print(f"Die CPU war zu {auslastung_anteil:.1f}% der {cpu_zeit} sec aktiv beschäftigt.")
-    
-    #Die lösung gefällt mir noch nicht gut, würde lieber direkt in der richtigen reihenfolge die wigets hinzufügen/ organisieren
-        self.layout.remove_widget(self.widgets[4])
-        self.layout.remove_widget(self.widgets[5])
-        self.layout.remove_widget(self.widgets[6])
-
-        self.layout.add_widget(self.widgets[6], index=0)
-        self.layout.add_widget(self.widgets[5], index=0)
-        self.layout.add_widget(self.widgets[4], index=0)
 
 if __name__ == '__main__':
     MyApp().run()
